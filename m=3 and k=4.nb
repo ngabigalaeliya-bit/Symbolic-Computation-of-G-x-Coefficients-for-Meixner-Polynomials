@@ -1,0 +1,74 @@
+(* ===Coefficients de récurrence des polynômes de Meixner===*)
+Cn[n_, \[Beta]_, c_] := -(c*(\[Beta] + n - 1) + (n - 1))/(c - 1)
+\[Lambda]n[n_, \[Beta]_, c_] := c*(n - 1)*(\[Beta] + n - 2)/(c - 1)^2
+
+(* ===Evaluations M_{n-j}(-\[Beta]-s;\[Beta],c)===*)
+EvalMs[n_, j_, s_, \[Beta]_, c_] := 
+ Pochhammer[\[Beta], n - j]/(c - 1)^(n - j)*
+  Sum[Pochhammer[-(n - j), r]*
+    Pochhammer[-s, r]/(Pochhammer[\[Beta], r]*r!)*c^r, {r, 0, 
+    Min[n - j, s]}]
+
+(*Cas spécial j=-1 pour M_{n+1}*)
+EvalMplus[n_, s_, \[Beta]_, c_] := 
+ Pochhammer[\[Beta], n + 1]/(c - 1)^(n + 1)*
+  Sum[Pochhammer[-(n + 1), r]*
+    Pochhammer[-s, r]/(Pochhammer[\[Beta], r]*r!)*c^r, {r, 0, 
+    Min[n + 1, s]}]
+
+(* ===Construction des colonnes pour les déterminants 4x4===*)
+(*s=0,1,2,3 pour les 4 lignes*)
+ColJ[n_, j_, \[Beta]_, c_] := 
+ Table[EvalMs[n, j, s, \[Beta], c], {s, 0, 3}]
+ColNplus[n_, \[Beta]_, c_] := 
+ Table[EvalMplus[n, s, \[Beta], c], {s, 0, 3}]
+
+(* ===Mineurs 4x4:Delta_{n-3+j}=det en supprimant colonne j+1===*)
+(*Colonnes disponibles:j=3,2,1,0,-1 soit M_{n-3},M_{n-2},M_{n-1},M_n,\
+M_{n+1}*)
+
+AllCols[n_, \[Beta]_, c_] := {ColJ[n, 3, \[Beta], c],(*M_{n-3}*)
+  ColJ[n, 2, \[Beta], c],(*M_{n-2}*)ColJ[n, 1, \[Beta], c],(*M_{n-1}*)
+  ColJ[n, 0, \[Beta], c],(*M_n*)ColNplus[n, \[Beta], c]   (*M_{n+1}*)}
+
+(*Det4x4 en supprimant la colonne idx (1-based)*)
+Det4[n_, idx_, \[Beta]_, c_] := 
+ Module[{cols}, cols = Delete[AllCols[n, \[Beta], c], idx];
+  Det[Transpose[cols]]]
+
+(* ===Cofacteurs R^{(4)} avec signes (-1)^{5+j}===*)
+Rn3[n_, \[Beta]_, c_] := +Det4[n, 1, \[Beta], c]   (*j=1:signe+*)
+Rn2[n_, \[Beta]_, c_] := -Det4[n, 2, \[Beta], c]   (*j=2:signe-*)
+Rn1[n_, \[Beta]_, c_] := +Det4[n, 3, \[Beta], c]   (*j=3:signe+*)
+Rn0[n_, \[Beta]_, c_] := -Det4[n, 4, \[Beta], c]   (*j=4:signe-*)
+V4[n_, \[Beta]_, 
+  c_] := +Det4[n, 5, \[Beta], c]   (*j=5:signe+ =V_{n-3,4}^{(4)}*)
+
+(* ===Polynômes auxiliaires===*)
+S2[x_, n_, \[Beta]_, 
+  c_] := (x - Cn[n - 1, \[Beta], c])*(x - 
+     Cn[n, \[Beta], c]) - \[Lambda]n[n, \[Beta], c]
+
+(* ===Expression de G2(x) selon eq:G2_m3k4===*)
+G2[x_, n_, \[Beta]_, 
+  c_] := (-1/
+    V4[n, \[Beta], 
+     c])*((Rn3[n, \[Beta], 
+        c]/(\[Lambda]n[n, \[Beta], c]*\[Lambda]n[n - 1, \[Beta], c]))*
+     S2[x, n, \[Beta], 
+      c] + (Rn2[n, \[Beta], c]/\[Lambda]n[n, \[Beta], c])*(x - 
+       Cn[n, \[Beta], c]) + 
+    Rn1[n, \[Beta], c] - \[Lambda]n[n + 1, \[Beta], c]*
+     V4[n, \[Beta], c])
+
+(* ===Développement et extraction des coefficients===*)
+G2expanded = Collect[FullSimplify[G2[x, n, \[Beta], c]], x]
+
+A4 = FullSimplify[Coefficient[G2expanded, x, 2]]
+B4 = FullSimplify[Coefficient[G2expanded, x, 1]]
+D4 = FullSimplify[Coefficient[G2expanded, x, 0]]
+
+(* ===Affichage===*)
+Print["A4 = ", A4]
+Print["B4 = ", B4]
+Print["D4 = ", D4]
