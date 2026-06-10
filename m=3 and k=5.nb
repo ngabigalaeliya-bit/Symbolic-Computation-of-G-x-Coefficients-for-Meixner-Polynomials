@@ -1,0 +1,67 @@
+(* ===Coefficients de récurrence des polynômes de Meixner===*)
+Cn[n_, \[Beta]_, c_] := -(c*(\[Beta] + n - 1) + (n - 1))/(c - 1)
+\[Lambda]n[n_, \[Beta]_, c_] := c*(n - 1)*(\[Beta] + n - 2)/(c - 1)^2
+
+(* ===Evaluations M_{n-j}(-\[Beta]-s;\[Beta],c)===*)
+(*j peut être négatif:j=-2=>M_{n+2},j=-1=>M_{n+1}*)
+EvalMs[n_, j_, s_, \[Beta]_, c_] := 
+ Pochhammer[\[Beta], n - j]/(c - 1)^(n - j)*
+  Sum[Pochhammer[-(n - j), r]*
+    Pochhammer[-s, r]/(Pochhammer[\[Beta], r]*r!)*(1 - c)^r, {r, 0, 
+    Min[n - j, s]}]
+
+(* ===Construction des colonnes pour les déterminants 5x5===*)
+(*s=0,1,2,3,4 pour les 5 lignes*)
+(*Colonnes:M_{n-3},M_{n-2},M_{n-1},M_n,M_{n+1},M_{n+2}*)
+(*correspondant à j=3,2,1,0,-1,-2*)
+ColJ[n_, j_, \[Beta]_, c_] := 
+ Table[EvalMs[n, j, s, \[Beta], c], {s, 0, 4}]
+
+AllCols[n_, \[Beta]_, c_] := {ColJ[n, 3, \[Beta], c],(*M_{n-3}*)
+  ColJ[n, 2, \[Beta], c],(*M_{n-2}*)ColJ[n, 1, \[Beta], c],(*M_{n-1}*)
+  ColJ[n, 0, \[Beta], c],(*M_n*)ColJ[n, -1, \[Beta], c],(*M_{n+1}*)
+  ColJ[n, -2, \[Beta], c]    (*M_{n+2}*)}
+
+(*Det5x5 en supprimant la colonne idx (1-based)*)
+Det5[n_, idx_, \[Beta]_, c_] := 
+ Module[{cols}, cols = Delete[AllCols[n, \[Beta], c], idx];
+  Det[Transpose[cols]]]
+
+(* ===Cofacteurs T^{(5)} avec signes (-1)^{6+j}===*)
+Tn3[n_, \[Beta]_, c_] := -Det5[n, 1, \[Beta], c]   (*j=1:signe-*)
+Tn2[n_, \[Beta]_, c_] := +Det5[n, 2, \[Beta], c]   (*j=2:signe+*)
+Tn1[n_, \[Beta]_, c_] := -Det5[n, 3, \[Beta], c]   (*j=3:signe-*)
+Tn0[n_, \[Beta]_, c_] := +Det5[n, 4, \[Beta], c]   (*j=4:signe+*)
+Tnp1[n_, \[Beta]_, c_] := -Det5[n, 5, \[Beta], c]   (*j=5:signe-*)
+V5[n_, \[Beta]_, 
+  c_] := +Det5[n, 6, \[Beta], c]   (*j=6:signe+ =V_{n-3,5}^{(5)}*)
+
+(* ===Polynômes auxiliaires===*)
+S2[x_, n_, \[Beta]_, 
+  c_] := (x - Cn[n - 1, \[Beta], c])*(x - 
+     Cn[n, \[Beta], c]) - \[Lambda]n[n, \[Beta], c]
+
+(* ===Expression de G2(x) selon eq:G2_m3k5===*)
+G2[x_, n_, \[Beta]_, 
+  c_] := (-1/(\[Beta]*(\[Beta] + 1)*(\[Beta] + 2)*(\[Beta] + 
+        3)*(\[Beta] + 4)*
+      V5[n, \[Beta], 
+       c]))*((Tn3[n, \[Beta], 
+        c]/(\[Lambda]n[n, \[Beta], c]*\[Lambda]n[n - 1, \[Beta], c]))*
+     S2[x, n, \[Beta], 
+      c] + (Tn2[n, \[Beta], c]/\[Lambda]n[n, \[Beta], c])*(x - 
+       Cn[n, \[Beta], c]) + 
+    Tn1[n, \[Beta], c] - \[Lambda]n[n + 1, \[Beta], c]*
+     Tnp1[n, \[Beta], c] - \[Lambda]n[n + 1, \[Beta], 
+      c]*(x - Cn[n + 2, \[Beta], c])*V5[n, \[Beta], c])
+(* ===Développement et extraction des coefficients===*)
+G2expanded = Collect[FullSimplify[G2[x, n, \[Beta], c]], x]
+
+A5 = FullSimplify[Coefficient[G2expanded, x, 2]]
+B5 = FullSimplify[Coefficient[G2expanded, x, 1]]
+D5 = FullSimplify[Coefficient[G2expanded, x, 0]]
+
+(* ===Affichage===*)
+Print["A5 = ", A5]
+Print["B5 = ", B5]
+Print["D5 = ", D5]
