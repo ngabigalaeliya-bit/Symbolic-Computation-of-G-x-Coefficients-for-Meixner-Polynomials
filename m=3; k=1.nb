@@ -1,0 +1,37 @@
+(* ================================================ *)
+(*  Explicit expressions of A1, B1, D1  —  m=3     *)
+(*  Derived from G2(x) via (4.5.7)-(4.5.9)         *)
+(* ================================================ *)
+
+ClearAll[x, n, b, c]
+
+(* --- Recurrence coefficients --- *)
+Cn[n_, b_, c_]      := (c*(b + n - 1) + (n - 1)) / (1 - c)
+lambda[n_, b_, c_]  := c*(n - 1)*(b + n - 2) / (1 - c)^2
+
+(* --- E_{n-j}^{(1)} via (4.1.3), j in {2,3} --- *)
+En3[n_, b_, c_] := Pochhammer[b, n-3] / (c - 1)^(n-3)
+En2[n_, b_, c_] := Pochhammer[b, n-2] / (c - 1)^(n-2)
+
+(* --- G2(x) exactly as given:                                     *)
+(*    G2(x) = [ -E_{n-3}(x - Cn) + (E_{n-2}/lambda_{n-1})         *)
+(*              * [(x-C_{n-1})(x-C_n) - lambda_n] ]               *)
+(*            / [ beta * lambda_n * E_{n-3} ]                      *)
+(* ---------------------------------------------------------------- *)
+G2[x_, n_, b_, c_] :=
+  (
+    - En3[n, b, c] * (x - Cn[n, b, c])
+    + (En2[n, b, c] / lambda[n-1, b, c]) *
+      ((x - Cn[n-1, b, c]) * (x - Cn[n, b, c]) - lambda[n, b, c])
+  ) / (b * lambda[n, b, c] * En3[n, b, c])
+
+(* --- Expand and extract coefficients of x^2, x^1, x^0 --- *)
+G2exp = Expand[G2[x, n, b, c]]
+
+A1 = Coefficient[G2exp, x, 2] // FullSimplify
+B1 = Coefficient[G2exp, x, 1] // FullSimplify
+D1 = Coefficient[G2exp, x, 0] // FullSimplify
+
+Print["A1 = ", A1]
+Print["B1 = ", B1]
+Print["D1 = ", D1]
