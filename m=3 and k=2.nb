@@ -1,0 +1,57 @@
+(* ===Coefficients de récurrence des polynômes de Meixner===*)
+Cn[n_, \[Beta]_, c_] := -(c*(\[Beta] + n - 1) + (n - 1))/(c - 1)
+\[Lambda]n[n_, \[Beta]_, c_] := c*(n - 1)*(\[Beta] + n - 2)/(c - 1)^2
+
+(* ===Evaluations aux points-\[Beta] et-\[Beta]-1===*)
+(*M_{n-j}(-\[Beta];\[Beta],c)=(\[Beta])_{n-j}/(c-1)^{n-j}*)
+Eval0[n_, j_, \[Beta]_, c_] := 
+ Pochhammer[\[Beta], n - j]/(c - 1)^(n - j)
+
+(*M_{n-j}(-\[Beta]-1;\[Beta],c)=(\[Beta])_{n-j}/(c-1)^{n-j}*(1+(n-j)*\
+(1-c)/\[Beta])*)
+Eval1[n_, j_, \[Beta]_, c_] := 
+ Pochhammer[\[Beta], 
+    n - j]/(c - 1)^(n - j)*(1 + (n - j)*(1 - c)/\[Beta])
+
+(* ===Cofacteurs P^{(2)}===*)
+Pn3[n_, \[Beta]_, c_] := 
+ Eval0[n, 2, \[Beta], c]*Eval1[n, 1, \[Beta], c] - 
+  Eval0[n, 1, \[Beta], c]*Eval1[n, 2, \[Beta], c]
+
+Pn2[n_, \[Beta]_, 
+  c_] := -(Eval0[n, 3, \[Beta], c]*Eval1[n, 1, \[Beta], c] - 
+    Eval0[n, 1, \[Beta], c]*Eval1[n, 3, \[Beta], c])
+
+Pn1[n_, \[Beta]_, c_] := 
+ Eval0[n, 3, \[Beta], c]*Eval1[n, 2, \[Beta], c] - 
+  Eval0[n, 2, \[Beta], c]*Eval1[n, 3, \[Beta], c]
+
+(* ===V_{n-3,2}^{(2)}=P_{n-1}^{(2)}===*)
+V2[n_, \[Beta]_, c_] := Pn1[n, \[Beta], c]
+
+(* ===Polynômes auxiliaires S1,S2===*)
+S2[x_, n_, \[Beta]_, 
+  c_] := (x - Cn[n - 1, \[Beta], c])*(x - 
+     Cn[n, \[Beta], c]) - \[Lambda]n[n, \[Beta], c]
+
+(* ===Expression de G2(x) avec facteur \[Beta](\[Beta]+\
+1) au dénominateur===*)
+G2[x_, n_, \[Beta]_, 
+  c_] := (-1/(\[Beta]*(\[Beta] + 1)*
+      V2[n, \[Beta], 
+       c]))*((Pn3[n, \[Beta], 
+        c]/(\[Lambda]n[n, \[Beta], c]*\[Lambda]n[n - 1, \[Beta], c]))*
+     S2[x, n, \[Beta], 
+      c] + (Pn2[n, \[Beta], c]/\[Lambda]n[n, \[Beta], c])*(x - 
+       Cn[n, \[Beta], c]) + Pn1[n, \[Beta], c])
+
+(* ===Développement et extraction des coefficients===*)
+G2expanded = Collect[FullSimplify[G2[x, n, \[Beta], c]], x]
+A2 = FullSimplify[Coefficient[G2expanded, x, 2]]
+B2 = FullSimplify[Coefficient[G2expanded, x, 1]]
+D2 = FullSimplify[Coefficient[G2expanded, x, 0]]
+
+(* ===Affichage===*)
+Print["A2 = ", A2]
+Print["B2 = ", B2]
+Print["D2 = ", D2]
