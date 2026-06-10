@@ -1,0 +1,100 @@
+(* ===Coefficients de récurrence===*)
+Cn[n_, \[Beta]_, c_] := -(c*(\[Beta] + n - 1) + (n - 1))/(c - 1)
+\[Lambda]n[n_, \[Beta]_, c_] := c*(n - 1)*(\[Beta] + n - 2)/(c - 1)^2
+
+(* ===Evaluations SIMPLIFIÉES avec valeurs explicites===*)
+(*On utilise les formules explicites s=0,1,2,3,4,5*)
+
+(*s=0:M_{n-j}(-\[Beta])=(\[Beta])_{n-j}/(c-1)^{n-j}*)
+E0[n_, j_] := Pochhammer[\[Beta], n - j]/(c - 1)^(n - j)
+
+(*s=1:M_{n-j}(-\[Beta]-1)=E0*(1+(n-j)*c/\[Beta])*)
+E1[n_, j_] := E0[n, j]*(1 + (n - j)*c/\[Beta])
+
+(*s=2:M_{n-j}(-\[Beta]-2)=E0*(1+2(n-j)c/\[Beta]+(n-j)(n-j-1)c²/\
+(\[Beta](\[Beta]+1)))*)
+E2[n_, j_] := 
+ E0[n, j]*(1 + 
+    2 (n - j)*c/\[Beta] + (n - j)*(n - j - 1)*
+     c^2/(\[Beta]*(\[Beta] + 1)))
+
+(*s=3*)
+E3[n_, j_] := 
+ E0[n, j]*(1 + 3 (n - j)*c/\[Beta] + 
+    3 (n - j)*(n - j - 1)*
+     c^2/(\[Beta]*(\[Beta] + 1)) + (n - j)*(n - j - 1)*(n - j - 2)*
+     c^3/(\[Beta]*(\[Beta] + 1)*(\[Beta] + 2)))
+
+(*s=4*)
+E4[n_, j_] := 
+ E0[n, j]*(1 + 4 (n - j)*c/\[Beta] + 
+    6 (n - j)*(n - j - 1)*c^2/(\[Beta]*(\[Beta] + 1)) + 
+    4 (n - j)*(n - j - 1)*(n - j - 2)*
+     c^3/(\[Beta]*(\[Beta] + 1)*(\[Beta] + 2)) + (n - j)*(n - j - 
+       1)*(n - j - 2)*(n - j - 3)*
+     c^4/(\[Beta]*(\[Beta] + 1)*(\[Beta] + 2)*(\[Beta] + 3)))
+
+(*s=5*)
+E5[n_, j_] := 
+ E0[n, j]*(1 + 5 (n - j)*c/\[Beta] + 
+    10 (n - j)*(n - j - 1)*c^2/(\[Beta]*(\[Beta] + 1)) + 
+    10 (n - j)*(n - j - 1)*(n - j - 2)*
+     c^3/(\[Beta]*(\[Beta] + 1)*(\[Beta] + 2)) + 
+    5 (n - j)*(n - j - 1)*(n - j - 2)*(n - j - 3)*
+     c^4/(\[Beta]*(\[Beta] + 1)*(\[Beta] + 2)*(\[Beta] + 3)) + (n - 
+       j)*(n - j - 1)*(n - j - 2)*(n - j - 3)*(n - j - 4)*
+     c^5/(\[Beta]*(\[Beta] + 1)*(\[Beta] + 2)*(\[Beta] + 
+          3)*(\[Beta] + 4)))
+
+(* ===Colonne j (j=3,2,1,0,-1,-2,-3) avec 6 lignes s=0..5===*)
+Col[n_, j_] := {E0[n, j], E1[n, j], E2[n, j], E3[n, j], E4[n, j], 
+  E5[n, j]}
+
+(* ===Les 7 colonnes:j=3,2,1,0,-1,-2,-3===*)
+(*On factorise E0 hors de chaque colonne pour alléger*)
+(*Matrice brute*)
+MatFull[n_] := 
+ Transpose[{Col[n, 3], Col[n, 2], Col[n, 1], Col[n, 0], Col[n, -1], 
+   Col[n, -2], Col[n, -3]}]
+
+(* ===Det6x6 en supprimant colonne idx===*)
+Det6[n_, idx_] := Module[{M}, M = Delete[Transpose[MatFull[n]], idx];
+  FullSimplify[Det[Transpose[M]]]]
+
+(* ===Calcul des cofacteurs UN PAR UN (pour éviter surcharge)===*)
+Print["Computing Wn3..."]; Wn3 = +Det6[n, 1]; Print["Wn3 done"]
+Print["Computing Wn2..."]; Wn2 = -Det6[n, 2]; Print["Wn2 done"]
+Print["Computing Wn1..."]; Wn1 = +Det6[n, 3]; Print["Wn1 done"]
+Print["Computing V6..."]; V6 = +Det6[n, 7]; Print["V6 done"]
+
+(* ===Polynômes auxiliaires===*)
+S2n[x_] := (x - Cn[n, \[Beta], c])*(x - 
+     Cn[n - 1, \[Beta], c]) - \[Lambda]n[n, \[Beta], c]
+S1n[x_] := x - Cn[n, \[Beta], c]
+S1np2[x_] := x - Cn[n + 2, \[Beta], c]
+S2np3[x_] := (x - Cn[n + 2, \[Beta], c])*(x - 
+     Cn[n + 3, \[Beta], c]) - \[Lambda]n[n + 3, \[Beta], c]
+
+(* ===On calcule Wnp1 et Wnp2 seulement si besoin===*)
+Print["Computing Wnp1..."]; Wnp1 = +Det6[n, 5]; Print["Wnp1 done"]
+Print["Computing Wnp2..."]; Wnp2 = -Det6[n, 6]; Print["Wnp2 done"]
+
+(* ===Expression de G2(x)===*)
+G2[x_] := (-1/
+    V6)*((Wn3/(\[Lambda]n[n, \[Beta], c]*\[Lambda]n[n - 1, \[Beta], c]))*
+     S2n[x] + (Wn2/\[Lambda]n[n, \[Beta], c])*S1n[x] + 
+    Wn1 - \[Lambda]n[n + 1, \[Beta], c]*
+     Wnp1 - \[Lambda]n[n + 1, \[Beta], c]*Wnp2*
+     S1np2[x] - \[Lambda]n[n + 1, \[Beta], c]*V6*S2np3[x])
+
+(* ===Extraction des coefficients===*)
+Print["Computing G2expanded..."]
+G2expanded = Collect[FullSimplify[G2[x]], x]
+
+A6 = FullSimplify[Coefficient[G2expanded, x, 2]]
+B6 = FullSimplify[Coefficient[G2expanded, x, 1]]
+D6 = FullSimplify[Coefficient[G2expanded, x, 0]]
+
+Print["A6 = ", A6]
+Print["B6 = ", B6]
+Print["D6 = ", D6]
